@@ -1,0 +1,183 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Important Question</title>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    box-sizing: border-box;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    --ink: #1b1b3a;
+    --card: #ffffff;
+    --yes: #ffd23f;
+    --no: #5bc0ff;
+    --badge: #7ed957;
+  }
+  html, body { height: 100%; margin: 0; }
+  body {
+    background: #000;
+    font-family: "Fredoka", "Trebuchet MS", Arial, sans-serif;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+  .cats {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    display: flex;
+    z-index: 0;
+  }
+  .cats .cat {
+    flex: 1;
+    min-width: 0;
+    background-image: url("cat.jpg");
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: contain;
+  }
+  @media (max-width: 700px) {
+    .cats .cat:not(:nth-child(2)) { display: none; }
+  }
+  .card {
+    position: relative;
+    z-index: 1;
+    background: var(--card);
+    color: var(--ink);
+    border: 4px solid var(--ink);
+    border-radius: 28px;
+    box-shadow: 8px 8px 0 rgba(0, 0, 0, 0.45);
+    padding: 40px 28px 30px;
+    max-width: min(88vw, 420px);
+    text-align: center;
+  }
+  .badge {
+    position: absolute;
+    top: -20px;
+    left: 50%;
+    transform: translateX(-50%) rotate(-3deg);
+    background: var(--badge);
+    border: 3px solid var(--ink);
+    border-radius: 999px;
+    padding: 4px 18px;
+    font-weight: 700;
+    font-size: 0.95rem;
+    white-space: nowrap;
+  }
+  /* little hearts inside the white card only */
+  .hearts {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    overflow: hidden;
+    border-radius: 24px;
+    pointer-events: none;
+    z-index: 0;
+  }
+  .hearts span {
+    position: absolute;
+    color: #ff8fa3;
+    opacity: 0.6;
+    animation: bob 3.2s ease-in-out infinite;
+    animation-delay: var(--d, 0s);
+  }
+  @keyframes bob {
+    0%, 100% { transform: translateY(0) rotate(var(--r, 0deg)); }
+    50% { transform: translateY(-6px) rotate(var(--r, 0deg)); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .hearts span { animation: none; transform: rotate(var(--r, 0deg)); }
+  }
+  h1, .buttons { position: relative; z-index: 1; }
+  h1 { font-size: 1.7rem; margin: 0 0 26px; line-height: 1.25; }
+  .buttons { display: flex; gap: 22px; justify-content: center; }
+  button {
+    font: 700 1.15rem "Fredoka", "Trebuchet MS", Arial, sans-serif;
+    color: var(--ink);
+    border: 3px solid var(--ink);
+    border-radius: 16px;
+    box-shadow: 0 5px 0 var(--ink);
+    padding: 10px 30px;
+    min-width: 100px;
+    cursor: pointer;
+  }
+  button:active { transform: translateY(3px); box-shadow: 0 2px 0 var(--ink); }
+  #yes { background: var(--yes); }
+  #no { background: var(--no); }
+  #no.free { position: fixed; z-index: 2; transition: left 0.15s ease, top 0.15s ease; }
+</style>
+</head>
+<body>
+  <div class="cats"><div class="cat"></div><div class="cat"></div><div class="cat"></div></div>
+
+  <div class="card">
+    <div class="hearts">
+      <span style="left:5%;top:14%;font-size:20px;--r:-15deg">&hearts;</span>
+      <span style="right:6%;top:10%;font-size:26px;--r:12deg;--d:0.6s">&hearts;</span>
+      <span style="left:12%;top:52%;font-size:14px;--r:10deg;--d:1.2s">&hearts;</span>
+      <span style="right:10%;top:48%;font-size:18px;--r:-12deg;--d:0.3s">&hearts;</span>
+      <span style="left:6%;bottom:8%;font-size:26px;--r:14deg;--d:0.9s">&hearts;</span>
+      <span style="right:7%;bottom:10%;font-size:20px;--r:-10deg;--d:1.5s">&hearts;</span>
+      <span style="left:46%;bottom:5%;font-size:14px;--r:6deg;--d:0.4s">&hearts;</span>
+    </div>
+    <div class="badge">&lt;3 &lt;3 &lt;3</div>
+    <h1 id="question">Dear Roa, will you be my girlfriend?</h1>
+    <div class="buttons" id="buttons">
+      <button id="yes">Yes</button>
+      <button id="no">No</button>
+    </div>
+  </div>
+
+<script>
+  const yes = document.getElementById("yes");
+  const no = document.getElementById("no");
+  const buttons = document.getElementById("buttons");
+  const question = document.getElementById("question");
+  const DODGE_DISTANCE = 90;
+  let placeholder = null;
+
+  function overlapsYes(x, y, w, h) {
+    const r = yes.getBoundingClientRect();
+    return !(x + w < r.left - 10 || x > r.right + 10 || y + h < r.top - 10 || y > r.bottom + 10);
+  }
+
+  function moveNo() {
+    const w = no.offsetWidth, h = no.offsetHeight;
+    if (!no.classList.contains("free")) {
+      placeholder = document.createElement("span");
+      placeholder.style.width = w + "px";
+      placeholder.style.height = h + "px";
+      buttons.appendChild(placeholder);
+      no.classList.add("free");
+    }
+    let x = 0, y = 0;
+    for (let i = 0; i < 50; i++) {
+      x = 10 + Math.random() * (window.innerWidth - w - 20);
+      y = 10 + Math.random() * (window.innerHeight - h - 20);
+      if (!overlapsYes(x, y, w, h)) break;
+    }
+    no.style.left = x + "px";
+    no.style.top = y + "px";
+  }
+
+  function onPointerMove(e) {
+    const r = no.getBoundingClientRect();
+    const cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+    if (Math.hypot(e.clientX - cx, e.clientY - cy) < DODGE_DISTANCE) moveNo();
+  }
+
+  document.addEventListener("pointermove", onPointerMove);
+  no.addEventListener("pointerdown", (e) => { e.preventDefault(); moveNo(); });
+  no.addEventListener("click", moveNo);
+
+  yes.addEventListener("click", () => {
+    document.removeEventListener("pointermove", onPointerMove);
+    question.textContent = "WULYAAAAAA😎\u2665";
+    buttons.remove();
+    no.remove();
+  });
+</script>
+</body>
+</html>
